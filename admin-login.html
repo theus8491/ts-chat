@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TS Premium | Acesso Administrador</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f9f9f9; color: #1a1a1a; }
+    .auth-card { background: #ffffff; border: 1px solid #eaeaea; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+    .input-field { background: #fcfcfc; border: 1px solid #e5e5e5; transition: 0.3s; }
+    .input-field:focus { border-color: #ef4444; outline: none; }
+    .btn-gradient { background: #1a1a1a; transition: 0.3s; cursor: pointer; }
+    .btn-gradient:hover { background: #000; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md">
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-extrabold tracking-tighter uppercase italic text-black">TS<span class="text-red-600">Prive</span></h1>
+      <p class="text-red-600 text-xs mt-2 uppercase tracking-[0.3em] font-bold">Painel Administrativo</p>
+    </div>
+
+    <div class="auth-card p-8 rounded-3xl">
+      <div class="space-y-4">
+        <input type="email" id="email" placeholder="E-mail do Administrador" class="input-field w-full p-4 rounded-xl text-sm text-black">
+        <input type="password" id="pass" placeholder="Master Key" class="input-field w-full p-4 rounded-xl text-sm text-black">
+        <button id="btn-login" class="btn-gradient w-full py-4 rounded-xl font-bold uppercase tracking-wider text-sm text-white">Entrar no Sistema</button>
+      </div>
+
+      <p class="text-center text-[10px] text-neutral-400 mt-6 uppercase hover:text-black transition">
+        <a href="index.html">Voltar ao login comum</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Correção: Acessar a classe corretamente
+    const { createClient } = supabase;
+    const client = createClient(
+        'https://nunyvnqtvmjqurgctxml.supabase.co', 
+        'sb_publishable_En9cX-NAv4AVOhNcjGVcow_IOvSYCFl'
+    );
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const pass = document.getElementById('pass').value;
+
+      if(!email || !pass) return alert("Por favor, preencha todos os campos.");
+
+      // Usando o 'client' criado acima
+      const { data, error } = await client.auth.signInWithPassword({ 
+        email: email, 
+        password: pass 
+      });
+
+      if (error) {
+        alert("Erro de Acesso: " + error.message);
+      } else {
+        window.location.href = 'admin.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #09090b; color: white; }
+        .glass { background: rgba(39, 39, 42, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">
+                Modelos <span class="text-red-500"> TS PACKS</span>
+            </h1>
+            <p class="text-neutral-400 mt-2">Escolha sua companhia para uma experiência exclusiva.</p>
+        </header>
+        
+        <div id="grid-modelos" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <p class="text-neutral-500">Conectando ao sistema...</p>
+        </div>
+    </div>
+
+    <script>
+        const client = supabase.createClient(
+            'https://nunyvnqtvmjqurgctxml.supabase.co',
+            'sb_publishable_En9cX-NAv4AVOhNcjGVcow_IOvSYCFl'
+        );
+
+        async function carregar() {
+            const { data, error } = await client.from('usuarios').select('*').eq('tipo', 'modelo');
+            
+            if (error) return alert("Erro ao carregar");
+            
+            const grid = document.getElementById('grid-modelos');
+            if (!data || data.length === 0) {
+                grid.innerHTML = "<p class='col-span-full text-center text-neutral-500'>Nenhuma modelo ativa agora.</p>";
+                return;
+            }
+
+            grid.innerHTML = data.map(m => `
+                <div class="glass p-4 rounded-3xl group hover:-translate-y-2 transition-all duration-300">
+                    <div class="relative overflow-hidden rounded-2xl mb-4">
+                        <img src="${m.foto_url}" class="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur px-3 py-1 rounded-full text-xs font-bold border border-white/10">ONLINE</div>
+                    </div>
+                    <h2 class="text-xl font-bold mb-1">${m.nome}</h2>
+                    <p class="text-red-400 text-sm font-semibold mb-4">A partir de R$ ${m.valores?.v10 || '0'}</p>
+                    
+                    <a href="chat.html?modelo=${m.id}" 
+                       class="block w-full bg-white text-black py-3 rounded-xl font-bold hover:bg-neutral-200 transition text-center">
+                        Chamar agora
+                    </a>
+                </div>
+            `).join('');
+        }
+        carregar();
+    </script>
+</body>
+</html>

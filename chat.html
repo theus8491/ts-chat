@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    #modal-zoom { transition: opacity 0.3s ease, visibility 0.3s ease; }
+    #modal-zoom.hidden { opacity: 0; visibility: hidden; display: flex !important; }
+  </style>
+</head>
+<body class="bg-[#050505] text-white h-screen flex overflow-hidden">
+
+  <aside class="w-64 bg-[#0d0d0d] p-6 border-r border-white/10 flex flex-col z-10">
+    <h1 class="text-xl font-black mb-8 text-red-500">TS CHATS</h1>
+    
+    <div id="container-foto" class="mb-6 hidden group cursor-pointer" onclick="abrirZoom()">
+        <img id="sala-foto-display" src="" class="w-full h-32 object-cover rounded-xl border border-white/10 shadow-lg transition group-hover:opacity-80">
+    </div>
+
+    <div id="menu-salas" class="space-y-2 flex-1 overflow-y-auto pr-2">
+      <p class="text-[10px] uppercase text-zinc-500 font-bold mb-4">Minhas Salas</p>
+    </div>
+    
+    <button onclick="window.location.href='index.html'" class="text-zinc-500 text-sm font-bold hover:text-white mt-4">← Voltar</button>
+  </aside>
+
+  <main class="flex-1 flex flex-col bg-[#070707]">
+    <header class="h-20 border-b border-white/10 flex items-center px-8 justify-between bg-[#080808]">
+      <h2 id="titulo-sala" class="font-bold text-lg">Selecione uma sala</h2>
+      <button id="btn-encerrar" onclick="encerrarSala()" class="hidden bg-red-600/10 text-red-500 px-5 py-2 rounded-xl text-xs font-bold border border-red-600/20">ENCERRAR</button>
+    </header>
+
+    <div id="chat-container" class="flex-1 overflow-y-auto p-8 space-y-4"></div>
+
+    <form id="chat-form" class="p-6 bg-[#090909] border-t border-white/10 flex gap-4 items-center hidden">
+      <input type="file" id="foto-input" accept="image/*" class="hidden" onchange="enviarArquivo(this)">
+      <button type="button" onclick="document.getElementById('foto-input').click()" class="text-zinc-500 hover:text-white text-xl">📸</button>
+      <button type="button" id="btn-audio" onclick="toggleAudio()" class="text-zinc-500 hover:text-white text-xl">🎙️</button>
+      <input id="message-input" class="flex-1 bg-[#151515] rounded-2xl px-6 py-4 outline-none border border-white/5" placeholder="Mensagem...">
+      <button class="bg-red-600 px-6 py-3 rounded-2xl font-bold">Enviar</button>
+    </form>
+  </main>
+
+  <div id="modal-zoom" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-10 cursor-zoom-out" onclick="fecharZoom()">
+      <img id="foto-zoom-display" src="" class="max-w-full max-h-full rounded-2xl border border-white/10">
+  </div>
+
+  <script>
+    const client = supabase.createClient('https://nunyvnqtvmjqurgctxml.supabase.co', 'sb_publishable_En9cX-NAv4AVOhNcjGVcow_IOvSYCFl');
+    const params = new URLSearchParams(window.location.search);
+    const salaAtual = params.get('sala');
+    let canal = null, mediaRecorder, audioChunks = [];
+
+    window.onload = () => {
+        const menu = document.getElementById('menu-salas');
+        const salas = JSON.parse(localStorage.getItem('minhas_salas') || '[]');
+        
+        salas.forEach(id => {
+            const nome = localStorage.getItem('nome_' + id) || "Sessão";
+            const btn = document.createElement('button');
+            btn.className = `w-full text-left p-3 rounded-xl text-sm ${id === salaAtual ? 'bg-red-600/20 text-red-500' : 'hover:bg-white/5'}`;
+            btn.innerHTML = nome;
+            btn.onclick = () => window.location.href = `chat.html?sala=${id}&tipo=modelo`;
+            menu.appendChild(btn);
+        });
+
+        if(salaAtual) {
+            document.getElementById('titulo-sala').innerText = localStorage.getItem('nome_' + salaAtual) || "Sala Privada";
+            document.getElementById('chat-form').classList.remove('hidden');
+            const foto = localStorage.getItem('foto_' + salaAtual);
+            if(foto) {
+                document.getElementById('sala-foto-display').src = foto;
+                document.getElementById('foto-zoom-display').src = foto;
+                document.getElementById('container-foto').classList.remove('hidden');
+            }
+            canal = client.channel(salaAtual);
+            canal.on('broadcast', { event: 'msg' }, (p) => render(p.payload.html, false)).subscribe();
+            if(params.get('tipo') === 'modelo') document.getElementById('btn-encerrar').classList.remove('hidden');
+        }
+    };
+
+    function abrirZoom() { document.getElementById('modal-zoom').classList.remove('hidden'); }
+    function fecharZoom() { document.getElementById('modal-zoom').classList.add('hidden'); }
+
+    async function toggleAudio() {
+        const btn = document.getElementById('btn-audio');
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const html = `<audio controls src="${audioUrl}"></audio>`;
+                render(html, true);
+                canal.send({ type: 'broadcast', event: 'msg', payload: { html } });
+                stream.getTracks().forEach(track => track.stop());
+            };
+            mediaRecorder.start();
+            btn.innerHTML = "⏹️";
+        } else {
+            mediaRecorder.stop();
+            btn.innerHTML = "🎙️";
+        }
+    }
+
+    function enviarArquivo(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const html = `<img src="${e.target.result}" class="max-w-[200px] rounded-lg">`;
+            render(html, true);
+            canal.send({ type: 'broadcast', event: 'msg', payload: { html } });
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function render(html, mine) {
+        const div = document.createElement('div');
+        div.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+        div.innerHTML = `<div class="p-4 rounded-3xl ${mine ? 'bg-red-600' : 'bg-zinc-800'} max-w-[70%]">${html}</div>`;
+        const container = document.getElementById('chat-container');
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    document.getElementById('chat-form').onsubmit = (e) => {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        if(!input.value.trim()) return;
+        render(`<p>${input.value}</p>`, true);
+        canal.send({ type: 'broadcast', event: 'msg', payload: { html: `<p>${input.value}</p>` } });
+        input.value = '';
+    };
+
+    function encerrarSala() {
+        if(confirm("Encerrar esta sala?")) window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>

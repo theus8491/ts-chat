@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TS CHAT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: Inter, sans-serif; background: #f5f5f5; }</style>
+</head>
+<body>
+
+<div class="min-h-screen">
+    <header class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div>
+                <h1 class="font-black text-2xl">TS <span class="text-red-600"> CHAT</span></h1>
+                <p class="text-xs text-zinc-500 uppercase">Dashboard da Modelo</p>
+            </div>
+            <button onclick="logout()" class="bg-black text-white px-5 py-2 rounded-xl text-sm font-bold">Sair</button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="mb-8">
+            <h2 class="text-2xl font-black">Olá, bem-vinda!</h2>
+            <p class="text-zinc-500">Gerencie seu perfil e inicie sessões privadas.</p>
+        </div>
+
+        <div class="bg-white border rounded-3xl p-8 mb-8 shadow-sm">
+            <h3 class="font-black text-xl mb-6">🚀 Iniciar Nova Sessão Privé</h3>
+            <div class="grid md:grid-cols-4 gap-6 items-end">
+                <div>
+                    <label class="block text-sm font-bold mb-2">Nome da Sala</label>
+                    <input type="text" id="sala-nome" placeholder="Ex: Privado VIP" class="w-full border rounded-xl p-3 bg-gray-50 font-bold outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2">Foto da Sala</label>
+                    <input type="file" id="sala-foto" accept="image/*" class="w-full text-sm border rounded-xl p-2.5 bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2">Limite</label>
+                    <select id="sala-limite" class="w-full border rounded-xl p-3 bg-gray-50 font-bold">
+                        <option value="1">1 Pessoa</option>
+                        <option value="2">2 Pessoas</option>
+                        <option value="3">3 Pessoas</option>
+                        <option value="4">4 Pessoas</option>
+                        <option value="5">5 Pessoas</option>
+                    </select>
+                </div>
+                <button onclick="iniciarSala()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition">
+                    CRIAR SALA
+                </button>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <a href="chat.html" class="bg-white border rounded-3xl p-8 hover:shadow-lg transition block">
+                <h3 class="font-black text-xl">💬 Chat</h3>
+                <p class="text-zinc-500 mt-2">Responder mensagens.</p>
+            </a>
+            <a href="galeria.html" class="bg-white border rounded-3xl p-8 hover:shadow-lg transition block">
+                <h3 class="font-black text-xl">📸 Galeria</h3>
+                <p class="text-zinc-500 mt-2">Gerenciar fotos e vídeos.</p>
+            </a>
+            <a href="editar-perfil.html" class="bg-white border rounded-3xl p-8 hover:shadow-lg transition block">
+                <h3 class="font-black text-xl">⚙️ Editar</h3>
+                <p class="text-zinc-500 mt-2">Atualizar perfil.</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function logout(){ window.location.href="index.html"; }
+
+    function iniciarSala() {
+        const fotoInput = document.getElementById('sala-foto');
+        const nomeSala = document.getElementById('sala-nome').value || "Sessão Privada"; // Pega o nome ou define padrão
+        
+        if(fotoInput.files.length === 0) return alert("Por favor, selecione uma foto para a sala!");
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const salaId = 'priv_' + Math.random().toString(36).substr(2, 6);
+            const limite = document.getElementById('sala-limite').value;
+            
+            // 1. SALVA A FOTO E O NOME COM CHAVE ÚNICA
+            localStorage.setItem('foto_' + salaId, e.target.result);
+            localStorage.setItem('nome_' + salaId, nomeSala); // Salvando o nome aqui
+            
+            // 2. ADICIONA NA LISTA DE SALAS ATIVAS
+            let salas = JSON.parse(localStorage.getItem('minhas_salas') || '[]');
+            salas.push(salaId);
+            localStorage.setItem('minhas_salas', JSON.stringify(salas));
+            
+            alert("Sala " + nomeSala + " gerada com sucesso!");
+            window.location.href = `chat.html?sala=${salaId}&tipo=modelo&limite=${limite}`;
+        };
+        reader.readAsDataURL(fotoInput.files[0]);
+    }
+</script>
+
+</body>
+</html>
+
+

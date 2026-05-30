@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo | TS PRIVÉ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body { background: #050505; color: #fff; font-family: 'Inter', sans-serif; }
+    .card { background: #0d0d0d; border: 1px solid #1a1a1a; }
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body class="flex min-h-screen">
+
+  <aside class="w-64 border-r border-white/5 p-8 hidden md:flex flex-col">
+    <h1 class="text-xl font-black italic mb-10">TS <span class="text-red-600">ADMIN</span></h1>
+    
+    <a href="index.html" class="flex items-center gap-2 text-zinc-500 hover:text-white transition text-[10px] font-bold uppercase tracking-widest mb-10">
+      ← Voltar para o Site
+    </a>
+
+    <nav class="flex-1 space-y-4">
+      <button onclick="changeView('dashboard', this)" class="block w-full text-left text-red-500 font-bold text-xs uppercase">Dashboard</button>
+      <button onclick="changeView('mensagens', this)" class="block w-full text-left text-zinc-500 hover:text-white transition text-xs uppercase">Mensagens</button>
+      <button onclick="changeView('config', this)" class="block w-full text-left text-zinc-500 hover:text-white transition text-xs uppercase">Configurações</button>
+    </nav>
+    
+    <button onclick="logout()" class="text-zinc-600 hover:text-red-500 transition text-[10px] uppercase font-bold">Sair do Sistema</button>
+  </aside>
+
+  <main class="flex-1 p-10">
+    <div id="dashboard" class="view active">
+      <div class="mb-10">
+        <h2 class="text-3xl font-bold">Painel de Controle</h2>
+        <p class="text-zinc-500 text-xs mt-2">Gerenciamento de conversas e acessos.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-8 rounded-3xl">
+          <p class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total de Conversas</p>
+          <h3 id="stat-count" class="text-5xl font-black mt-2">0</h3>
+        </div>
+        <div class="card p-8 rounded-3xl">
+          <p class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Status do Banco</p>
+          <h3 class="text-lg font-bold mt-2 text-green-500">Conectado</h3>
+        </div>
+      </div>
+    </div>
+
+    <div id="mensagens" class="view">
+      <h2 class="text-3xl font-bold">Mensagens</h2>
+      <p class="text-zinc-500 mt-4">Área de listagem de mensagens.</p>
+    </div>
+
+    <div id="config" class="view">
+      <h2 class="text-3xl font-bold">Configurações</h2>
+      <p class="text-zinc-500 mt-4">Configurações do sistema.</p>
+    </div>
+  </main>
+
+  <script>
+    const supabase = supabase.createClient('https://nunyvnqtvmjqurgctxml.supabase.co', 'sb_publishable_En9cX-NAv4AVOhNcjGVcow_IOvSYCFl');
+
+    // Função para trocar de tela
+    function changeView(id, btn) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      
+      document.querySelectorAll('nav button').forEach(b => b.className = "block w-full text-left text-zinc-500 hover:text-white transition text-xs uppercase");
+      btn.className = "block w-full text-left text-red-500 font-bold text-xs uppercase";
+    }
+
+    // Segurança: Bloquear quem não está logado
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'admin-login.html';
+        return;
+      }
+      
+      const { count } = await supabase.from('mensagens').select('*', { count: 'exact', head: true });
+      document.getElementById('stat-count').innerText = count || 0;
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'admin-login.html';
+    }
+
+    checkSession();
+  </script>
+</body>
+</html>
