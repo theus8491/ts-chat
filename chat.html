@@ -6,51 +6,61 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { height: 100dvh; }
-    #modal-zoom { transition: opacity 0.3s ease, visibility 0.3s ease; }
-    #modal-zoom.hidden { opacity: 0; visibility: hidden; display: flex !important; }
-    #chat-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    /* Correção para evitar que o mobile trave o clique */
+    html, body { height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; background: #050505; }
+    #app-wrapper { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+    
+    #chat-container { 
+        flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding: 1rem;
+        -webkit-overflow-scrolling: touch; /* Suaviza scroll no iPhone */
+    }
+    
+    /* Garante que elementos interativos fiquem sempre no topo */
+    button, input, #container-foto-mobile { position: relative; z-index: 20; }
+    
+    #modal-zoom { display: none; }
+    #modal-zoom.active { display: flex !important; }
   </style>
 </head>
-<body class="bg-[#050505] text-white flex overflow-hidden">
+<body>
 
-  <aside class="hidden md:flex w-64 bg-[#0d0d0d] p-6 border-r border-white/10 flex-col z-10">
-    <h1 class="text-xl font-black mb-8"><span class="text-white">TS</span><span class="text-red-500"> CHATS</span></h1>
-    <div id="container-foto" class="mb-6 hidden group cursor-pointer" onclick="abrirZoom()">
-        <img id="sala-foto-display" src="" class="w-full h-32 object-cover rounded-xl border border-white/10 shadow-lg">
-    </div>
-    <div id="menu-salas" class="space-y-2 flex-1 overflow-y-auto pr-2">
-      <p class="text-[10px] uppercase text-zinc-500 font-bold mb-4">Minhas Salas</p>
-    </div>
-    <button onclick="window.location.href='index.html'" class="text-zinc-500 text-sm font-bold hover:text-white mt-4">← Voltar</button>
-  </aside>
+  <div id="app-wrapper">
+      <aside class="hidden md:flex w-64 bg-[#0d0d0d] p-6 border-r border-white/10 flex-col z-10">
+        <h1 class="text-xl font-black mb-8"><span class="text-white">TS</span><span class="text-red-500"> CHATS</span></h1>
+        <div id="container-foto" class="mb-6 hidden cursor-pointer" onclick="abrirZoom()">
+            <img id="sala-foto-display" src="" class="w-full h-32 object-cover rounded-xl border border-white/10">
+        </div>
+        <div id="menu-salas" class="space-y-2 flex-1 overflow-y-auto"></div>
+        <button onclick="window.location.href='index.html'" class="text-zinc-500 text-sm font-bold mt-4">← Voltar</button>
+      </aside>
 
-  <main class="flex-1 flex flex-col bg-[#070707] w-full">
-    <header class="border-b border-white/10 bg-[#080808] p-4 flex items-center justify-between">
-      <div>
-        <h2 id="titulo-sala" class="font-bold text-sm md:text-lg truncate">Selecione uma sala</h2>
-        <div id="status-online" class="text-[10px] text-green-500 font-mono"></div>
-      </div>
-      <button id="btn-encerrar" onclick="encerrarSala()" class="hidden bg-red-600/10 text-red-500 px-3 py-1 rounded-xl text-[10px] font-bold border border-red-600/20">ENCERRAR</button>
-    </header>
+      <main class="flex-1 flex flex-col w-full bg-[#070707]">
+        <header class="h-16 border-b border-white/10 flex items-center px-4 justify-between bg-[#080808]">
+          <div>
+            <h2 id="titulo-sala" class="font-bold text-sm truncate">Selecione uma sala</h2>
+            <div id="status-online" class="text-[10px] text-green-500 font-mono"></div>
+          </div>
+          <button id="btn-encerrar" onclick="encerrarSala()" class="hidden bg-red-600/10 text-red-500 px-3 py-1 rounded-xl text-[10px] border border-red-600/20">ENCERRAR</button>
+        </header>
 
-    <div id="container-foto-mobile" class="md:hidden p-4 pb-0 hidden">
-        <img id="sala-foto-display-mobile" src="" class="w-full h-24 object-cover rounded-xl border border-white/10" onclick="abrirZoom()">
-    </div>
+        <div id="container-foto-mobile" class="md:hidden p-4 pb-0 hidden">
+            <img id="sala-foto-display-mobile" src="" class="w-full h-24 object-cover rounded-xl border border-white/10" onclick="abrirZoom()">
+        </div>
 
-    <div id="chat-container" class="p-4"></div>
+        <div id="chat-container"></div>
 
-    <form id="chat-form" class="p-3 bg-[#090909] border-t border-white/10 flex gap-2 items-center hidden">
-      <input type="file" id="foto-input" accept="image/*" class="hidden" onchange="enviarArquivo(this)">
-      <button type="button" onclick="document.getElementById('foto-input').click()" class="text-zinc-500 text-xl">📸</button>
-      <button type="button" id="btn-audio" onclick="toggleAudio()" class="text-zinc-500 text-xl">🎙️</button>
-      <input id="message-input" class="flex-1 bg-[#151515] rounded-2xl px-4 py-2 outline-none border border-white/5" placeholder="Mensagem...">
-      <button class="bg-red-600 px-4 py-2 rounded-2xl font-bold text-sm">Enviar</button>
-    </form>
-  </main>
+        <form id="chat-form" class="p-3 bg-[#090909] border-t border-white/10 flex gap-3 items-center hidden">
+          <input type="file" id="foto-input" accept="image/*" class="hidden" onchange="enviarArquivo(this)">
+          <button type="button" onclick="document.getElementById('foto-input').click()" class="text-white text-2xl">📸</button>
+          <button type="button" id="btn-audio" onclick="toggleAudio()" class="text-white text-2xl">🎙️</button>
+          <input id="message-input" class="flex-1 bg-[#151515] rounded-xl px-4 py-3 outline-none text-white border border-white/5" placeholder="Mensagem...">
+          <button type="submit" class="bg-red-600 px-5 py-3 rounded-xl font-bold text-sm">Enviar</button>
+        </form>
+      </main>
+  </div>
 
-  <div id="modal-zoom" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onclick="fecharZoom()">
-      <img id="foto-zoom-display" src="" class="max-w-full max-h-full rounded-2xl border border-white/10">
+  <div id="modal-zoom" class="fixed inset-0 bg-black/95 z-[100] items-center justify-center p-4" onclick="fecharZoom()">
+      <img id="foto-zoom-display" src="" class="max-w-full max-h-full rounded-xl">
   </div>
 
   <script>
@@ -60,13 +70,26 @@
     let canal = null, mediaRecorder, audioChunks = [];
 
     window.onload = () => {
+        const menu = document.getElementById('menu-salas');
         const salas = JSON.parse(localStorage.getItem('minhas_salas') || '[]');
-        if (salaAtual && !salas.includes(salaAtual)) { window.location.href = "index.html"; return; }
         
+        if (salaAtual && !salas.includes(salaAtual)) {
+            alert("Acesso negado.");
+            window.location.href = "index.html";
+            return;
+        }
+
+        salas.forEach(id => {
+            const btn = document.createElement('button');
+            btn.className = `w-full text-left p-3 rounded-xl text-sm ${id === salaAtual ? 'bg-red-600 text-white' : 'text-zinc-500 hover:bg-white/5'}`;
+            btn.innerText = localStorage.getItem('nome_' + id) || "Sessão";
+            btn.onclick = () => window.location.href = `chat.html?sala=${id}&tipo=modelo`;
+            menu.appendChild(btn);
+        });
+
         if(salaAtual) {
             document.getElementById('titulo-sala').innerText = localStorage.getItem('nome_' + salaAtual) || "Sala Privada";
             document.getElementById('chat-form').classList.remove('hidden');
-            
             const foto = localStorage.getItem('foto_' + salaAtual);
             if(foto) {
                 document.getElementById('sala-foto-display').src = foto;
@@ -79,25 +102,54 @@
             canal = client.channel(salaAtual);
             canal.on('presence', { event: 'sync' }, () => {
                 const count = Object.keys(canal.presenceState()).length;
-                document.getElementById('status-online').innerText = count > 1 ? `${count} pessoas online` : "1 online";
+                document.getElementById('status-online').innerText = `${count} online`;
             }).subscribe(async (s) => { if(s === 'SUBSCRIBED') await canal.track({}); });
-
             canal.on('broadcast', { event: 'msg' }, (p) => render(p.payload.html, false)).subscribe();
             if(params.get('tipo') === 'modelo') document.getElementById('btn-encerrar').classList.remove('hidden');
         }
     };
 
-    function abrirZoom() { document.getElementById('modal-zoom').classList.remove('hidden'); }
-    function fecharZoom() { document.getElementById('modal-zoom').classList.add('hidden'); }
     function render(html, mine) {
         const div = document.createElement('div');
         div.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
-        div.innerHTML = `<div class="p-4 rounded-3xl ${mine ? 'bg-red-600' : 'bg-zinc-800'} max-w-[80%]">${html}</div>`;
+        div.innerHTML = `<div class="p-4 rounded-3xl ${mine ? 'bg-red-600' : 'bg-zinc-800'} text-sm max-w-[85%]">${html}</div>`;
         const container = document.getElementById('chat-container');
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
-    // ... restante das funções (toggleAudio, enviarArquivo, etc) mantêm-se iguais
+
+    async function toggleAudio() {
+        const btn = document.getElementById('btn-audio');
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const html = `<audio controls src="${url}" class="w-full"></audio>`;
+                render(html, true);
+                canal.send({ type: 'broadcast', event: 'msg', payload: { html } });
+                stream.getTracks().forEach(t => t.stop());
+            };
+            mediaRecorder.start(); btn.innerText = "⏹️";
+        } else { mediaRecorder.stop(); btn.innerText = "🎙️"; }
+    }
+
+    document.getElementById('chat-form').onsubmit = (e) => {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        if(!input.value.trim()) return;
+        render(`<p>${input.value}</p>`, true);
+        canal.send({ type: 'broadcast', event: 'msg', payload: { html: `<p>${input.value}</p>` } });
+        input.value = '';
+    };
+
+    function enviarArquivo(input) { const reader = new FileReader(); reader.onload = (e) => { const html = `<img src="${e.target.result}" class="max-w-[200px] rounded-lg">`; render(html, true); canal.send({ type: 'broadcast', event: 'msg', payload: { html } }); }; reader.readAsDataURL(input.files[0]); }
+    function abrirZoom() { document.getElementById('modal-zoom').classList.add('active'); }
+    function fecharZoom() { document.getElementById('modal-zoom').classList.remove('active'); }
+    function encerrarSala() { if(confirm("Encerrar?")) window.location.href = "index.html"; }
   </script>
 </body>
 </html>
